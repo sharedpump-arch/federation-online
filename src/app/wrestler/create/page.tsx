@@ -38,8 +38,9 @@ const STAT_DEFAULT = 60
 
 // ===== AVATAR DRAW =====
 function drawWrestler(canvas: HTMLCanvasElement, appearance: AppearanceState) {
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
+  const ctxOrNull = canvas.getContext('2d')
+  if (!ctxOrNull) return
+  const ctx = ctxOrNull
   ctx.imageSmoothingEnabled = false
   ctx.clearRect(0, 0, 64, 64)
 
