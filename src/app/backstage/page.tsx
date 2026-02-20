@@ -154,7 +154,7 @@ export default function BackstagePage() {
 
   async function trainStat(key: string) {
     if (!wrestler) return
-    const current = wrestler[key as keyof Wrestler] as number
+    const current = wrestler![key as keyof Wrestler] as number
     if (current >= 85 || wrestler!.training_points <= 0) return
 
     const cost = current >= 75 ? 2 : 1
@@ -393,7 +393,7 @@ export default function BackstagePage() {
         </div>
 
         {STAT_KEYS.map(key => {
-          const val = wrestler[key as keyof Wrestler] as number
+          const val = w[key as keyof Wrestler] as number
           const atCap = val >= 85
           const cost = val >= 75 ? 2 : 1
           const canTrain = !atCap && w.training_points >= cost
@@ -586,7 +586,7 @@ export default function BackstagePage() {
             {STAT_KEYS.slice(0, 3).map(k => (
               <div key={k} className="flex justify-between" style={{ fontSize: '14px', color: 'var(--dim)', marginBottom: '2px' }}>
                 <span>{STAT_LABELS[k]}</span>
-                <span style={{ color: 'var(--text)' }}>{wrestler[k as keyof Wrestler] as number}</span>
+                <span style={{ color: 'var(--text)' }}>{w[k as keyof Wrestler] as number}</span>
               </div>
             ))}
           </div>
