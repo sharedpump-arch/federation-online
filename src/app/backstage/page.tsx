@@ -155,10 +155,10 @@ export default function BackstagePage() {
   async function trainStat(key: string) {
     if (!wrestler) return
     const current = wrestler[key as keyof Wrestler] as number
-    if (current >= 85 || wrestler.training_points <= 0) return
+    if (current >= 85 || wrestler!.training_points <= 0) return
 
     const cost = current >= 75 ? 2 : 1
-    if (wrestler.training_points < cost) {
+    if (wrestler!.training_points < cost) {
       showToast('⚠ Training points insufficienti!')
       return
     }
@@ -168,9 +168,9 @@ export default function BackstagePage() {
       .from('wrestlers')
       .update({
         [key]: current + 1,
-        training_points: wrestler.training_points - cost,
+        training_points: wrestler!.training_points - cost,
       })
-      .eq('id', wrestler.id)
+      .eq('id', wrestler!.id)
 
     if (!error) {
       setWrestler(w => w ? { ...w, [key]: current + 1, training_points: w.training_points - cost } : w)
@@ -181,11 +181,11 @@ export default function BackstagePage() {
   async function doFanAction(actionId: string, gain: number) {
     if (!wrestler || fanActionsUsed.includes(actionId)) return
     const supabase = createClient()
-    const newOver = Math.min(100, wrestler.over_fans + gain)
+    const newOver = Math.min(100, wrestler!.over_fans + gain)
     const { error } = await supabase
       .from('wrestlers')
       .update({ over_fans: newOver })
-      .eq('id', wrestler.id)
+      .eq('id', wrestler!.id)
 
     if (!error) {
       setWrestler(w => w ? { ...w, over_fans: newOver } : w)
@@ -292,6 +292,7 @@ export default function BackstagePage() {
   )
 
   if (!wrestler) return null
+  const w = wrestler as NonNullable<typeof wrestler>
 
   // ===== RENDER ROOMS =====
   function renderMap() {
@@ -383,8 +384,8 @@ export default function BackstagePage() {
         {/* Points display */}
         <div style={{ background: '#0a0a15', border: '2px solid var(--gold)', padding: '12px 16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ color: 'var(--dim)' }}>TRAINING POINTS</span>
-          <span className="font-pixel" style={{ fontSize: '16px', color: wrestler.training_points > 0 ? 'var(--gold)' : 'var(--accent)' }}>
-            {wrestler.training_points} / 5
+          <span className="font-pixel" style={{ fontSize: '16px', color: w.training_points > 0 ? 'var(--gold)' : 'var(--accent)' }}>
+            {w.training_points} / 5
           </span>
         </div>
         <div style={{ fontSize: '14px', color: 'var(--dim)', marginBottom: '16px', lineHeight: '1.6' }}>
@@ -395,7 +396,7 @@ export default function BackstagePage() {
           const val = wrestler[key as keyof Wrestler] as number
           const atCap = val >= 85
           const cost = val >= 75 ? 2 : 1
-          const canTrain = !atCap && wrestler.training_points >= cost
+          const canTrain = !atCap && w.training_points >= cost
 
           return (
             <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '14px', borderBottom: '1px solid var(--border)', marginBottom: '14px' }}>
@@ -428,9 +429,9 @@ export default function BackstagePage() {
         <div style={{ background: '#0a0a15', border: '2px solid var(--gold)', padding: '12px 16px', marginBottom: '16px' }}>
           <div style={{ fontSize: '14px', color: 'var(--dim)', marginBottom: '6px' }}>POPOLARITÀ (OVER)</div>
           <div style={{ height: '18px', background: '#1a1a2a', border: '1px solid var(--border)', marginBottom: '4px' }}>
-            <div style={{ height: '100%', width: `${wrestler.over_fans}%`, background: 'linear-gradient(90deg, var(--gold), var(--accent))', transition: 'width 0.5s' }} />
+            <div style={{ height: '100%', width: `${w.over_fans}%`, background: 'linear-gradient(90deg, var(--gold), var(--accent))', transition: 'width 0.5s' }} />
           </div>
-          <div className="font-pixel" style={{ fontSize: '12px', color: 'var(--gold)' }}>{wrestler.over_fans} / 100</div>
+          <div className="font-pixel" style={{ fontSize: '12px', color: 'var(--gold)' }}>{w.over_fans} / 100</div>
         </div>
 
         <div style={{ fontSize: '14px', color: 'var(--dim)', marginBottom: '10px' }}>AZIONI DISPONIBILI OGGI:</div>
@@ -493,16 +494,16 @@ export default function BackstagePage() {
               Tipo: {r.type.replace('_', ' ').toUpperCase()} • Da: {r.requester_name}
             </div>
             <div className="flex gap-2 items-center">
-              <button onClick={() => vote(r.id, 1)} disabled={!!myVotes[r.id] || r.requester_id === wrestler.id}
+              <button onClick={() => vote(r.id, 1)} disabled={!!myVotes[r.id] || r.requester_id === w.id}
                 style={{ background: 'transparent', border: '2px solid var(--green)', color: 'var(--green)', fontFamily: 'VT323, monospace', fontSize: '18px', padding: '3px 10px', cursor: 'pointer' }}>
                 👍 {r.votes_up}
               </button>
-              <button onClick={() => vote(r.id, -1)} disabled={!!myVotes[r.id] || r.requester_id === wrestler.id}
+              <button onClick={() => vote(r.id, -1)} disabled={!!myVotes[r.id] || r.requester_id === w.id}
                 style={{ background: 'transparent', border: '2px solid var(--accent)', color: 'var(--accent)', fontFamily: 'VT323, monospace', fontSize: '18px', padding: '3px 10px', cursor: 'pointer' }}>
                 👎 {r.votes_down}
               </button>
               {myVotes[r.id] && <span style={{ color: 'var(--green)', fontSize: '14px' }}>✓ VOTATO</span>}
-              {r.requester_id === wrestler.id && <span style={{ color: 'var(--dim)', fontSize: '14px' }}>TUA RICHIESTA</span>}
+              {r.requester_id === w.id && <span style={{ color: 'var(--dim)', fontSize: '14px' }}>TUA RICHIESTA</span>}
             </div>
           </div>
         ))}
@@ -528,9 +529,9 @@ export default function BackstagePage() {
         <div className="flex items-center justify-between">
           <Link href="/dashboard" className="font-pixel" style={{ fontSize: '10px', color: 'var(--accent)' }}>⚡ FEDERATION</Link>
           <div className="flex gap-4" style={{ fontSize: '17px' }}>
-            <span style={{ color: 'var(--gold)' }}>{wrestler.name}</span>
-            <span style={{ color: 'var(--dim)' }}>OVER: <span style={{ color: 'var(--green)' }}>{wrestler.over_fans}</span></span>
-            <span style={{ color: 'var(--dim)' }}>TP: <span style={{ color: 'var(--gold)' }}>{wrestler.training_points}/5</span></span>
+            <span style={{ color: 'var(--gold)' }}>{w.name}</span>
+            <span style={{ color: 'var(--dim)' }}>OVER: <span style={{ color: 'var(--green)' }}>{w.over_fans}</span></span>
+            <span style={{ color: 'var(--dim)' }}>TP: <span style={{ color: 'var(--gold)' }}>{w.training_points}/5</span></span>
           </div>
           <Link href="/dashboard" className="font-pixel" style={{ fontSize: '8px', color: 'var(--dim)' }}>◀ DASHBOARD</Link>
         </div>
@@ -581,7 +582,7 @@ export default function BackstagePage() {
           {/* My wrestler stats */}
           <div style={{ padding: '10px', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
             <div className="font-pixel mb-2" style={{ fontSize: '7px', color: 'var(--dim)' }}>IL TUO WRESTLER</div>
-            <div style={{ fontSize: '16px', color: 'var(--gold)', marginBottom: '6px' }}>{wrestler.name}</div>
+            <div style={{ fontSize: '16px', color: 'var(--gold)', marginBottom: '6px' }}>{w.name}</div>
             {STAT_KEYS.slice(0, 3).map(k => (
               <div key={k} className="flex justify-between" style={{ fontSize: '14px', color: 'var(--dim)', marginBottom: '2px' }}>
                 <span>{STAT_LABELS[k]}</span>
