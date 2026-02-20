@@ -332,7 +332,7 @@ export default function ShowPage() {
             <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: '0' }}>
               {pbpLines.map((line, i) => (
                 <div key={i} style={{
-                  padding: '6px 0', borderBottom: '1px solid rgba(34,34,58,0.5)', fontSize: '17px', lineHeight: '1.5',
+                  padding: '6px 0', borderBottom: '1px solid rgba(34,34,58,0.5)', lineHeight: '1.5',
                   color: line.startsWith('🏆') ? 'var(--gold)' : line.startsWith('⚡') ? 'var(--accent)' : line.startsWith('👥') ? 'var(--dim)' : 'var(--text)',
                   fontFamily: line.startsWith('🏆') ? 'Press Start 2P, monospace' : 'VT323, monospace',
                   fontSize: line.startsWith('🏆') ? '11px' : '17px',
