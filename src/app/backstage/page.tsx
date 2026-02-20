@@ -336,8 +336,8 @@ export default function BackstagePage() {
             <div style={{ color: 'var(--dim)', textAlign: 'center', padding: '20px' }}>Nessun messaggio ancora. Rompi il ghiaccio!</div>
           )}
           {messages.map(m => (
-            <div key={m.id} style={{ background: '#1a1a2a', borderLeft: `3px solid ${m.wrestler_id === wrestler.id ? 'var(--gold)' : 'var(--blue)'}`, padding: '8px 10px' }}>
-              <div className="font-pixel" style={{ fontSize: '7px', color: m.wrestler_id === wrestler.id ? 'var(--gold)' : 'var(--blue)', marginBottom: '3px' }}>{m.wrestler_name}</div>
+            <div key={m.id} style={{ background: '#1a1a2a', borderLeft: `3px solid ${m.wrestler_id === wrestler?.id ? 'var(--gold)' : 'var(--blue)'}`, padding: '8px 10px' }}>
+              <div className="font-pixel" style={{ fontSize: '7px', color: m.wrestler_id === wrestler?.id ? 'var(--gold)' : 'var(--blue)', marginBottom: '3px' }}>{m.wrestler_name}</div>
               <div style={{ fontSize: '17px' }}>{m.content}</div>
               <div style={{ fontSize: '12px', color: 'var(--dim)', marginTop: '2px' }}>{new Date(m.created_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</div>
             </div>
