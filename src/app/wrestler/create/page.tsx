@@ -121,15 +121,9 @@ function drawWrestler(canvas: HTMLCanvasElement, appearance: AppearanceState) {
   px(31, 16, 2, 3, sd)
 
   // Mouth
-  if (appearance.attitude === 'face' || !('attitude' in appearance)) {
-    px(27, 21, 10, 2, sd)
-    px(27, 20, 2, 2, sd)
-    px(35, 20, 2, 2, sd)
-  } else {
-    px(27, 22, 10, 2, sd)
-    px(27, 21, 2, 2, sd)
-    px(35, 21, 2, 2, sd)
-  }
+  px(27, 21, 10, 2, sd)
+  px(27, 20, 2, 2, sd)
+  px(35, 20, 2, 2, sd)
   px(24, 23, 16, 2, sd)
   px(24, 5, 6, 3, lt(s, 25))
 
