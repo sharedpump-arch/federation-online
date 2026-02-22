@@ -1,50 +1,62 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 
 export default function RegisterPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
+  function getErrorMessage(msg: string): string {
+    if (msg.includes('already registered') || msg.includes('already been registered'))
+      return 'Questa email è già registrata. Prova ad accedere.'
+    if (msg.includes('weak_password') || msg.includes('Password should be'))
+      return 'La password deve essere di almeno 8 caratteri.'
+    if (msg.includes('invalid') && msg.includes('email'))
+      return 'Inserisci un indirizzo email valido.'
+    if (msg.includes('Username') || msg.includes('username'))
+      return 'Questo username è già in uso. Scegline un altro.'
+    return 'Qualcosa è andato storto. Riprova.'
+  }
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
+    if (password.length < 8) {
+      setError('La password deve essere di almeno 8 caratteri.')
+      return
+    }
     setLoading(true)
     setError('')
 
     const supabase = createClient()
-
-    // 1. Crea l'utente Auth
     const { data, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { username }
-      }
+      email, password,
+      options: { data: { username } }
     })
 
     if (authError) {
-      setError(authError.message)
+      setError(getErrorMessage(authError.message))
       setLoading(false)
       return
     }
 
-    // 2. Salva username nella tabella profiles
     if (data.user) {
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({ id: data.user.id, username, email })
 
       if (profileError) {
-        setError('Errore nel salvataggio del profilo: ' + profileError.message)
-        setLoading(false)
-        return
+        if (profileError.message.includes('duplicate') || profileError.message.includes('unique')) {
+          setError('Questo username è già in uso. Scegline un altro.')
+        } else if (!profileError.message.includes('security policy')) {
+          setError('Errore nel profilo: ' + profileError.message)
+        }
+        // Se è un errore RLS, il trigger ha già creato il profilo — va bene
       }
     }
 
@@ -52,111 +64,107 @@ export default function RegisterPage() {
     setLoading(false)
   }
 
-  if (success) {
-    return (
-      <main className="min-h-screen flex items-center justify-center px-4">
-        <div className="game-panel p-8 max-w-md w-full text-center">
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
-          <h2 className="font-pixel mb-4" style={{ fontSize: '10px', color: 'var(--green)' }}>
-            REGISTRAZIONE COMPLETATA!
-          </h2>
-          <p style={{ color: 'var(--dim)', marginBottom: '20px' }}>
-            Controlla la tua email per confermare l'account, poi accedi.
-          </p>
-          <Link href="/auth/login">
-            <button className="btn-gold w-full">▶ VAI AL LOGIN</button>
-          </Link>
-        </div>
-      </main>
-    )
+  async function handleGoogleLogin() {
+    setGoogleLoading(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` }
+    })
+    if (error) {
+      setError('Errore con Google. Riprova.')
+      setGoogleLoading(false)
+    }
   }
 
-  return (
-    <main className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+  if (success) return (
+    <main style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ width: '100%', maxWidth: '400px', textAlign: 'center' }}>
+        <div style={{ fontSize: '64px', marginBottom: '24px' }}>✅</div>
+        <h1 style={{ fontSize: '26px', fontWeight: 700, marginBottom: '12px' }}>Account creato!</h1>
+        <p style={{ color: 'var(--text2)', marginBottom: '32px', lineHeight: '1.6' }}>
+          Controlla la tua email <strong style={{ color: 'var(--text)' }}>{email}</strong> e clicca il link di conferma per attivare l'account.
+        </p>
+        <Link href="/auth/login">
+          <button className="btn btn-primary btn-full">Vai al login</button>
+        </Link>
+      </div>
+    </main>
+  )
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Link href="/" className="font-pixel" style={{ fontSize: '10px', color: 'var(--accent)', letterSpacing: '2px' }}>
-            ⚡ FEDERATION ONLINE
+  return (
+    <main style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <div className="font-pixel" style={{ fontSize: '9px', color: 'var(--accent)', letterSpacing: '1px', lineHeight: '2' }}>
+              ⚡ FEDERATION ONLINE
+            </div>
           </Link>
-          <h1 className="font-pixel mt-4" style={{ fontSize: '12px', color: 'var(--gold)', lineHeight: '1.6' }}>
-            CREA IL TUO<br/>ACCOUNT
-          </h1>
+          <h1 style={{ fontSize: '28px', fontWeight: 700, marginTop: '16px', letterSpacing: '-0.02em' }}>Crea un account</h1>
+          <p style={{ color: 'var(--text2)', marginTop: '6px' }}>Inizia il tuo percorso nel wrestling</p>
         </div>
 
-        {/* Form */}
-        <div className="game-panel p-6">
-          <form onSubmit={handleRegister} className="flex flex-col gap-5">
+        <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '16px', padding: '32px' }}>
 
-            <div>
-              <label className="font-pixel block mb-2" style={{ fontSize: '8px', color: 'var(--dim)' }}>
-                USERNAME
-              </label>
-              <input
-                type="text"
-                className="game-input"
-                placeholder="Il tuo nome utente..."
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                required
-                minLength={3}
-                maxLength={20}
-              />
+          {/* Google */}
+          <button className="btn-social" onClick={handleGoogleLogin} disabled={googleLoading}>
+            <svg width="18" height="18" viewBox="0 0 18 18">
+              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/>
+              <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+            </svg>
+            {googleLoading ? 'Connessione...' : 'Registrati con Google'}
+          </button>
+
+          <div className="divider" style={{ margin: '20px 0' }}>oppure</div>
+
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="form-group">
+              <label className="form-label">Username</label>
+              <input type="text" className="form-input" placeholder="il-tuo-nome"
+                value={username} onChange={e => setUsername(e.target.value)}
+                required minLength={3} maxLength={20} />
             </div>
-
-            <div>
-              <label className="font-pixel block mb-2" style={{ fontSize: '8px', color: 'var(--dim)' }}>
-                EMAIL
-              </label>
-              <input
-                type="email"
-                className="game-input"
-                placeholder="La tua email..."
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input type="email" className="form-input" placeholder="la-tua@email.com"
+                value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
-
-            <div>
-              <label className="font-pixel block mb-2" style={{ fontSize: '8px', color: 'var(--dim)' }}>
-                PASSWORD
-              </label>
-              <input
-                type="password"
-                className="game-input"
-                placeholder="Minimo 8 caratteri..."
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                minLength={8}
-              />
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input type="password" className="form-input" placeholder="Minimo 8 caratteri"
+                value={password} onChange={e => setPassword(e.target.value)}
+                required minLength={8} />
+              {password.length > 0 && password.length < 8 && (
+                <span style={{ fontSize: '12px', color: 'var(--text3)' }}>
+                  Ancora {8 - password.length} caratteri
+                </span>
+              )}
             </div>
 
             {error && (
-              <div style={{ background: 'rgba(255,45,85,0.1)', border: '1px solid var(--accent)', padding: '10px', color: 'var(--accent)', fontSize: '15px' }}>
-                ⚠ {error}
+              <div className="alert alert-error">
+                <span>⚠</span>
+                <span>{error}</span>
               </div>
             )}
 
-            <button
-              type="submit"
-              className="btn-gold w-full"
-              disabled={loading}
-              style={{ fontSize: '10px', padding: '14px', opacity: loading ? 0.6 : 1 }}
-            >
-              {loading ? '⏳ CREAZIONE...' : '▶ CREA ACCOUNT'}
+            <button type="submit" className="btn btn-primary btn-full" disabled={loading} style={{ marginTop: '4px' }}>
+              {loading ? 'Creazione account...' : 'Crea account'}
             </button>
           </form>
-
-          <div className="mt-6 text-center" style={{ color: 'var(--dim)', fontSize: '16px' }}>
-            Hai già un account?{' '}
-            <Link href="/auth/login" style={{ color: 'var(--accent)' }}>
-              Accedi
-            </Link>
-          </div>
         </div>
+
+        <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: 'var(--text3)' }}>
+          Hai già un account?{' '}
+          <Link href="/auth/login" style={{ color: 'var(--text2)', fontWeight: 600, textDecoration: 'none' }}>
+            Accedi
+          </Link>
+        </p>
 
       </div>
     </main>
